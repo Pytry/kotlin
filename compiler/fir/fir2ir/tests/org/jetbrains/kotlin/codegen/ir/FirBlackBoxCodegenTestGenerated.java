@@ -16744,6 +16744,21 @@ public class FirBlackBoxCodegenTestGenerated extends AbstractFirBlackBoxCodegenT
                     runTest("compiler/testData/codegen/box/jvm8/defaults/allCompatibility/properSuperSignature.kt");
                 }
 
+                @TestMetadata("properSuperSignature2.kt")
+                public void testProperSuperSignature2() throws Exception {
+                    runTest("compiler/testData/codegen/box/jvm8/defaults/allCompatibility/properSuperSignature2.kt");
+                }
+
+                @TestMetadata("properSuperSignature2_property.kt")
+                public void testProperSuperSignature2_property() throws Exception {
+                    runTest("compiler/testData/codegen/box/jvm8/defaults/allCompatibility/properSuperSignature2_property.kt");
+                }
+
+                @TestMetadata("properSuperSignature_property.kt")
+                public void testProperSuperSignature_property() throws Exception {
+                    runTest("compiler/testData/codegen/box/jvm8/defaults/allCompatibility/properSuperSignature_property.kt");
+                }
+
                 @TestMetadata("propertyAnnotation.kt")
                 public void testPropertyAnnotation() throws Exception {
                     runTest("compiler/testData/codegen/box/jvm8/defaults/allCompatibility/propertyAnnotation.kt");
@@ -17029,6 +17044,21 @@ public class FirBlackBoxCodegenTestGenerated extends AbstractFirBlackBoxCodegenT
                 @TestMetadata("properSuperSignature.kt")
                 public void testProperSuperSignature() throws Exception {
                     runTest("compiler/testData/codegen/box/jvm8/defaults/noDefaultImpls/properSuperSignature.kt");
+                }
+
+                @TestMetadata("properSuperSignature2.kt")
+                public void testProperSuperSignature2() throws Exception {
+                    runTest("compiler/testData/codegen/box/jvm8/defaults/noDefaultImpls/properSuperSignature2.kt");
+                }
+
+                @TestMetadata("properSuperSignature2_property.kt")
+                public void testProperSuperSignature2_property() throws Exception {
+                    runTest("compiler/testData/codegen/box/jvm8/defaults/noDefaultImpls/properSuperSignature2_property.kt");
+                }
+
+                @TestMetadata("properSuperSignature_property.kt")
+                public void testProperSuperSignature_property() throws Exception {
+                    runTest("compiler/testData/codegen/box/jvm8/defaults/noDefaultImpls/properSuperSignature_property.kt");
                 }
 
                 @TestMetadata("propertyAnnotation.kt")
@@ -31353,6 +31383,16 @@ public class FirBlackBoxCodegenTestGenerated extends AbstractFirBlackBoxCodegenT
         @TestMetadata("kt36973.kt")
         public void testKt36973() throws Exception {
             runTest("compiler/testData/codegen/box/traits/kt36973.kt");
+        }
+
+        @TestMetadata("kt38029.kt")
+        public void testKt38029() throws Exception {
+            runTest("compiler/testData/codegen/box/traits/kt38029.kt");
+        }
+
+        @TestMetadata("kt38029_property.kt")
+        public void testKt38029_property() throws Exception {
+            runTest("compiler/testData/codegen/box/traits/kt38029_property.kt");
         }
 
         @TestMetadata("kt5393.kt")
