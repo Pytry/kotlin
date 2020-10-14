@@ -26,7 +26,7 @@ import java.nio.file.StandardOpenOption
 @ExperimentalPathApi
 @kotlin.internal.InlineOnly
 public inline fun Path.reader(charset: Charset = Charsets.UTF_8, vararg options: OpenOption): InputStreamReader {
-    return inputStream(*options).reader(charset)
+    return InputStreamReader(Files.newInputStream(this, *options), charset)
 }
 
 /**
@@ -44,7 +44,12 @@ public inline fun Path.bufferedReader(
     bufferSize: Int = DEFAULT_BUFFER_SIZE,
     vararg options: OpenOption
 ): BufferedReader {
-    return reader(charset, *options).buffered(bufferSize)
+    return BufferedReader(
+        InputStreamReader(
+            Files.newInputStream(this, *options),
+            charset
+        ),
+        bufferSize)
 }
 
 /**
@@ -57,7 +62,7 @@ public inline fun Path.bufferedReader(
 @ExperimentalPathApi
 @kotlin.internal.InlineOnly
 public inline fun Path.writer(charset: Charset = Charsets.UTF_8, vararg options: OpenOption): OutputStreamWriter {
-    return outputStream(*options).writer(charset)
+    return OutputStreamWriter(Files.newOutputStream(this, *options), charset)
 }
 
 /**
@@ -75,7 +80,11 @@ public inline fun Path.bufferedWriter(
     bufferSize: Int = DEFAULT_BUFFER_SIZE,
     vararg options: OpenOption
 ): BufferedWriter {
-    return writer(charset, *options).buffered(bufferSize)
+    return BufferedWriter(
+        OutputStreamWriter(
+            Files.newOutputStream(this, *options),
+            charset),
+        bufferSize)
 }
 
 /**
@@ -130,9 +139,8 @@ public inline fun Path.appendBytes(array: ByteArray) {
  */
 @SinceKotlin("1.4")
 @ExperimentalPathApi
-@kotlin.internal.InlineOnly
-public inline fun Path.readText(charset: Charset = Charsets.UTF_8): String =
-    readBytes().toString(charset)
+public fun Path.readText(charset: Charset = Charsets.UTF_8): String =
+    reader(charset).readText()
 
 /**
  * Sets the content of this file as [text] encoded using UTF-8 or the specified [charset].
@@ -146,8 +154,8 @@ public inline fun Path.readText(charset: Charset = Charsets.UTF_8): String =
  */
 @SinceKotlin("1.4")
 @ExperimentalPathApi
-public fun Path.writeText(text: String, charset: Charset = Charsets.UTF_8, vararg options: OpenOption): Unit {
-    writeBytes(text.toByteArray(charset), *options)
+public fun Path.writeText(text: String, charset: Charset = Charsets.UTF_8, vararg options: OpenOption) {
+    Files.newOutputStream(this, *options).writer(charset).use { it.write(text) }
 }
 
 /**
@@ -158,8 +166,8 @@ public fun Path.writeText(text: String, charset: Charset = Charsets.UTF_8, varar
  */
 @SinceKotlin("1.4")
 @ExperimentalPathApi
-public fun Path.appendText(text: String, charset: Charset = Charsets.UTF_8): Unit {
-    writeText(text, charset, StandardOpenOption.APPEND)
+public fun Path.appendText(text: String, charset: Charset = Charsets.UTF_8) {
+    Files.newOutputStream(this, StandardOpenOption.APPEND).writer(charset).use { it.write(text) }
 }
 
 /**
@@ -168,15 +176,15 @@ public fun Path.appendText(text: String, charset: Charset = Charsets.UTF_8): Uni
  *
  * You may use this function on huge files.
  *
- * @param options options to determine how the file is opened.
  * @param charset character set to use for reading text, UTF-8 by default.
  * @param action function to process file lines.
  */
 @SinceKotlin("1.4")
 @ExperimentalPathApi
-public fun Path.forEachLine(charset: Charset = Charsets.UTF_8, vararg options: OpenOption, action: (line: String) -> Unit): Unit {
-    // Note: close is called at forEachLine
-    bufferedReader(charset, options = options).forEachLine(action)
+@kotlin.internal.InlineOnly
+public inline fun Path.forEachLine(charset: Charset = Charsets.UTF_8, action: (line: String) -> Unit): Unit {
+    // cannot use non-inline forEachLine
+    Files.newBufferedReader(this, charset).useLines { it.forEach(action) }
 }
 
 /**
@@ -233,7 +241,7 @@ public inline fun Path.readLines(charset: Charset = Charsets.UTF_8): List<String
 @ExperimentalPathApi
 @kotlin.internal.InlineOnly
 public inline fun <T> Path.useLines(charset: Charset = Charsets.UTF_8, block: (Sequence<String>) -> T): T {
-    return bufferedReader(charset).use { block(it.lineSequence()) }
+    return Files.newBufferedReader(this, charset).use { block(it.lineSequence()) }
 }
 
 /**
