@@ -24,8 +24,8 @@ import org.jetbrains.kotlin.config.isReleaseCoroutines
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.deserialization.PLATFORM_DEPENDENT_ANNOTATION_FQ_NAME
 import org.jetbrains.kotlin.descriptors.impl.ValueParameterDescriptorImpl
-import org.jetbrains.kotlin.load.java.SpecialGenericSignatures.SpecialSignatureInfo
 import org.jetbrains.kotlin.load.java.DescriptorsJvmAbiUtil
+import org.jetbrains.kotlin.load.java.SpecialGenericSignatures.SpecialSignatureInfo
 import org.jetbrains.kotlin.load.java.descriptors.JavaCallableMemberDescriptor
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
@@ -60,7 +60,23 @@ import org.jetbrains.org.objectweb.asm.Type
 import org.jetbrains.org.objectweb.asm.commons.InstructionAdapter
 import org.jetbrains.org.objectweb.asm.commons.Method
 import org.jetbrains.org.objectweb.asm.tree.LabelNode
+import java.lang.Deprecated
 import java.util.*
+import kotlin.AssertionError
+import kotlin.Boolean
+import kotlin.Int
+import kotlin.Pair
+import kotlin.String
+import kotlin.Unit
+import kotlin.apply
+import kotlin.arrayOf
+import kotlin.error
+import kotlin.let
+import kotlin.to
+import kotlin.with
+
+@JvmField
+internal val JAVA_LANG_DEPRECATED = Type.getType(Deprecated::class.java).descriptor
 
 fun generateIsCheck(
     v: InstructionAdapter,
@@ -320,7 +336,11 @@ val CallableDescriptor.arity: Int
 fun FqName.topLevelClassInternalName() = JvmClassName.byClassId(ClassId(parent(), shortName())).internalName
 fun FqName.topLevelClassAsmType(): Type = Type.getObjectType(topLevelClassInternalName())
 
-fun initializeVariablesForDestructuredLambdaParameters(codegen: ExpressionCodegen, valueParameters: List<ValueParameterDescriptor>, endLabel: Label?) {
+fun initializeVariablesForDestructuredLambdaParameters(
+    codegen: ExpressionCodegen,
+    valueParameters: List<ValueParameterDescriptor>,
+    endLabel: Label?
+) {
     // Do not write line numbers until destructuring happens
     // (otherwise destructuring variables will be uninitialized in the beginning of lambda)
     codegen.runWithShouldMarkLineNumbers(false) {
