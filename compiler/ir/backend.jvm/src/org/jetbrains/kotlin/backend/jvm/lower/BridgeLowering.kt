@@ -15,10 +15,7 @@ import org.jetbrains.kotlin.backend.common.phaser.makeIrFilePhase
 import org.jetbrains.kotlin.backend.jvm.JvmBackendContext
 import org.jetbrains.kotlin.backend.jvm.JvmLoweredDeclarationOrigin
 import org.jetbrains.kotlin.backend.jvm.codegen.isJvmInterface
-import org.jetbrains.kotlin.backend.jvm.ir.copyCorrespondingPropertyFrom
-import org.jetbrains.kotlin.backend.jvm.ir.eraseTypeParameters
-import org.jetbrains.kotlin.backend.jvm.ir.erasedUpperBound
-import org.jetbrains.kotlin.backend.jvm.ir.isJvmAbstract
+import org.jetbrains.kotlin.backend.jvm.ir.*
 import org.jetbrains.kotlin.backend.jvm.lower.inlineclasses.unboxInlineClass
 import org.jetbrains.kotlin.codegen.AsmUtil
 import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
@@ -32,10 +29,7 @@ import org.jetbrains.kotlin.ir.expressions.*
 import org.jetbrains.kotlin.ir.symbols.IrClassSymbol
 import org.jetbrains.kotlin.ir.symbols.IrFunctionSymbol
 import org.jetbrains.kotlin.ir.symbols.IrSimpleFunctionSymbol
-import org.jetbrains.kotlin.ir.symbols.IrTypeParameterSymbol
 import org.jetbrains.kotlin.ir.types.*
-import org.jetbrains.kotlin.ir.types.impl.IrSimpleTypeImpl
-import org.jetbrains.kotlin.ir.types.impl.makeTypeProjection
 import org.jetbrains.kotlin.ir.util.*
 import org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid
 import org.jetbrains.kotlin.name.Name
@@ -624,34 +618,6 @@ internal class BridgeLowering(val context: JvmBackendContext) : FileLoweringPass
         }
     }
 }
-
-private val IrType.upperBound: IrType
-    get() = erasedUpperBound.symbol.starProjectedType
-
-private fun IrType.eraseToScope(scopeOwner: IrTypeParametersContainer): IrType = eraseToScope(collectVisibleTypeParameters(scopeOwner))
-
-private fun IrType.eraseToScope(visibleTypeParameters: Set<IrTypeParameter>): IrType {
-    require(this is IrSimpleType) { error("Unexpected IrType kind: ${render()}") }
-    return when (classifier) {
-        is IrClassSymbol -> IrSimpleTypeImpl(classifier, hasQuestionMark, arguments.map { it.eraseToScope(visibleTypeParameters) }, annotations)
-        is IrTypeParameterSymbol -> if (classifier.owner in visibleTypeParameters) this else upperBound
-        else -> error("unknown IrType classifier kind: ${classifier.owner.render()}")
-    }
-}
-
-private fun IrTypeArgument.eraseToScope(visibleTypeParameters: Set<IrTypeParameter>): IrTypeArgument = when (this) {
-    is IrStarProjection -> this
-    is IrTypeProjection -> makeTypeProjection(type.eraseToScope(visibleTypeParameters), variance)
-    else -> error("unknown type projection kind: ${render()}")
-}
-
-private fun collectVisibleTypeParameters(scopeOwner: IrTypeParametersContainer): Set<IrTypeParameter> =
-    generateSequence(scopeOwner) { current ->
-        val parent = current.parent as? IrTypeParametersContainer
-        parent.takeUnless { parent is IrClass && current is IrClass && !current.isInner }
-    }
-        .flatMap { it.typeParameters }
-        .toSet()
 
 private fun IrDeclaration.comesFromJava() = parentAsClass.origin == IrDeclarationOrigin.IR_EXTERNAL_JAVA_DECLARATION_STUB
 

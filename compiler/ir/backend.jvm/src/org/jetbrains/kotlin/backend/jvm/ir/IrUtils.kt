@@ -344,3 +344,31 @@ fun IrProperty.needsAccessor(accessor: IrSimpleFunction): Boolean = when {
 val IrDeclaration.isStaticInlineClassReplacement: Boolean
     get() = origin == JvmLoweredDeclarationOrigin.STATIC_INLINE_CLASS_REPLACEMENT
             || origin == JvmLoweredDeclarationOrigin.STATIC_INLINE_CLASS_CONSTRUCTOR
+
+val IrType.upperBound: IrType
+    get() = erasedUpperBound.symbol.starProjectedType
+
+fun IrType.eraseToScope(scopeOwner: IrTypeParametersContainer): IrType = eraseToScope(collectVisibleTypeParameters(scopeOwner))
+
+fun IrType.eraseToScope(visibleTypeParameters: Set<IrTypeParameter>): IrType {
+    require(this is IrSimpleType) { error("Unexpected IrType kind: ${render()}") }
+    return when (classifier) {
+        is IrClassSymbol -> IrSimpleTypeImpl(classifier, hasQuestionMark, arguments.map { it.eraseToScope(visibleTypeParameters) }, annotations)
+        is IrTypeParameterSymbol -> if (classifier.owner in visibleTypeParameters) this else upperBound
+        else -> error("unknown IrType classifier kind: ${classifier.owner.render()}")
+    }
+}
+
+private fun IrTypeArgument.eraseToScope(visibleTypeParameters: Set<IrTypeParameter>): IrTypeArgument = when (this) {
+    is IrStarProjection -> this
+    is IrTypeProjection -> makeTypeProjection(type.eraseToScope(visibleTypeParameters), variance)
+    else -> error("unknown type projection kind: ${render()}")
+}
+
+fun collectVisibleTypeParameters(scopeOwner: IrTypeParametersContainer): Set<IrTypeParameter> =
+    generateSequence(scopeOwner) { current ->
+        val parent = current.parent as? IrTypeParametersContainer
+        parent.takeUnless { parent is IrClass && current is IrClass && !current.isInner && !current.isLocal }
+    }
+        .flatMap { it.typeParameters }
+        .toSet()
